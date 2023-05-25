@@ -4,18 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"time"
-
+	"strconv"
 	config "github.com/Antilles7227/vitastor-exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
-	"github.com/prometheus/common/version"
 	log "github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
+
 )
 
-const (
-	namespace = "vitastor"
-)
 
 type poolCollector struct {
 	params			*prometheus.Desc
@@ -65,7 +61,6 @@ func (collector *poolCollector) Describe(ch chan<- *prometheus.Desc) {
 
 //Collect implements required collect function for all promehteus collectors
 func (collector *poolCollector) Collect(ch chan<- prometheus.Metric) {
-
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   collector.vitastorConfig.VitastorEtcdUrls,
 		DialTimeout: 5 * time.Second,
@@ -97,10 +92,9 @@ func (collector *poolCollector) Collect(ch chan<- prometheus.Metric) {
 
 	
 	for id, v := range pools {
-
 		poolStats := &config.VitastorPoolStats{}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second * 20)
-		poolStatsPath := collector.vitastorConfig.VitastorPrefix + "/pool/stats" + id
+		poolStatsPath := collector.vitastorConfig.VitastorPrefix + "/pool/stats/" + id
 		poolStatsRaw, err := cli.Get(ctx, poolStatsPath)
 		cancel()
 		if err != nil {
@@ -117,22 +111,16 @@ func (collector *poolCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(collector.params, prometheus.GaugeValue, 1, v.Name, 
 																						id,
 																						v.Scheme,
-																						string(v.PGSize),
-																						string(v.ParityChunks),
-																						string(v.PGMinSize),
-																						string(v.PGCount),
+																						strconv.Itoa(int(v.PGSize)),
+																						strconv.Itoa(int(v.ParityChunks)),
+																						strconv.Itoa(int(v.PGMinSize)),
+																						strconv.Itoa(int(v.PGCount)),
 																						v.FailureDomain)
 
-		ch <- prometheus.MustNewConstMetric(collector.totalRawTb, prometheus.GaugeValue, poolStats.TotalRawTb, id, v.Scheme)
-		ch <- prometheus.MustNewConstMetric(collector.usedRawTb, prometheus.GaugeValue, poolStats.UsedRawTb, id, v.Scheme)
-		ch <- prometheus.MustNewConstMetric(collector.spaceEfficiency, prometheus.GaugeValue, poolStats.SpaceEfficiency, id, v.Scheme)
-		ch <- prometheus.MustNewConstMetric(collector.rawToUsable, prometheus.GaugeValue, poolStats.RawToUsable, id, v.Scheme)
+		ch <- prometheus.MustNewConstMetric(collector.totalRawTb, prometheus.GaugeValue, poolStats.TotalRawTb, v.Name, id)
+		ch <- prometheus.MustNewConstMetric(collector.usedRawTb, prometheus.GaugeValue, poolStats.UsedRawTb, v.Name, id)
+		ch <- prometheus.MustNewConstMetric(collector.spaceEfficiency, prometheus.GaugeValue, poolStats.SpaceEfficiency, v.Name, id)
+		ch <- prometheus.MustNewConstMetric(collector.rawToUsable, prometheus.GaugeValue, poolStats.RawToUsable, v.Name, id)
 	}
 }
 
-func Register(config *config.VitastorConfig) {
-	collector := newPoolCollector(config)
-	prometheus.MustRegister(version.NewCollector("volume_exporter"))
-	prometheus.MustRegister(collector)
-	prometheus.Unregister(collectors.NewGoCollector())
-}

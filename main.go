@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
@@ -20,7 +21,8 @@ func main() {
 	vitastorConfArg := flag.String("vitastor-conf", "/etc/vitastor/vitastor.conf", "Path to vitastor.conf (to obtain etcd connection params). Default: /etc/vitastor/vitastor.conf")
 	etcdUrlArg := flag.String("etcd-url", "", "Comma-separated list of etcd urls. WARNING: setting that param will override --vitastor-conf. Default: empty")
 	vitastorPrefix := flag.String("vitastor-prefix", "/vitastor", "Etcd tree prefix for Vitastor cluster info. Default: /vitastor")
-
+	flag.Parse()
+	
 	config, err := loadConfiguration(*vitastorConfArg)
 	if err != nil {
 		if *etcdUrlArg != "" {
@@ -43,12 +45,9 @@ func main() {
 	exporter.Register(&config)
 
 	http.Handle(*uriArg, promhttp.Handler())
-    http.ListenAndServe(":" + string(int32(*portArg)), nil)
+    log.Fatal(http.ListenAndServe(":" + strconv.Itoa(*portArg), nil))
 }
 
-func getMetrics(config vconfig.VitastorConfig, refreshInterval int) {
-
-}
 
 func loadConfiguration(file string) (vconfig.VitastorConfig, error) {
 	var config vconfig.VitastorConfig
