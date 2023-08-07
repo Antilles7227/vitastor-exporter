@@ -6,7 +6,7 @@ type VitastorOSDState struct {
 	Host string `json:"host"`
 	Port int `json:"port"`
 	PrimaryEnabled bool `json:"primary_enabled"`
-	State string `json:"up"`
+	State string `json:"state"`
 }
 
 type VitastorOSDStats struct {

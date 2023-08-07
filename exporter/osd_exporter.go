@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	config "github.com/Antilles7227/vitastor-exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -83,7 +82,6 @@ func (collector *osdCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	defer cli.Close()
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 20)
 	osdStatePath := collector.vitastorConfig.VitastorPrefix + "/osd/state"
 	osdStateRaw, err := cli.Get(ctx, osdStatePath, clientv3.WithPrefix())
@@ -91,12 +89,13 @@ func (collector *osdCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		log.Error(err, "Unable to get osd state info")
 	}
-	ctx, cancel = context.WithTimeout(context.Background(), time.Second * 20)
+	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second * 20)
 	osdStatsPath := collector.vitastorConfig.VitastorPrefix + "/osd/stats"
-	osdStatsRaw, err := cli.Get(ctx, osdStatsPath, clientv3.WithPrefix())
-	cancel()
+	osdStatsRaw, err := cli.Get(ctx2, osdStatsPath, clientv3.WithPrefix())
+	cancel2()
 	if err != nil {
 		log.Error(err, "Unable to get osd stats info")
+		return
 	}
 
 	osdState := make(map[string]config.VitastorOSDState)
@@ -108,7 +107,8 @@ func (collector *osdCollector) Collect(ch chan<- prometheus.Metric) {
 			if err != nil {
 				log.Error(err, "Unable to parse osd state")
 			}
-			osdState[string(v.Key)] = st
+			osd_num := strings.Split(string(v.Key),"/")[4]
+			osdState[osd_num] = st
 		}
 	}
 	if osdStatsRaw.Count != 0 {
@@ -118,34 +118,34 @@ func (collector *osdCollector) Collect(ch chan<- prometheus.Metric) {
 			if err != nil {
 				log.Error(err, "Unable to parse osd stats")
 			}
-			osdStats[string(v.Key)] = st
+			osd_num := strings.Split(string(v.Key),"/")[4]
+			osdStats[osd_num] = st
 		}
 	}
 
 	for osd, v := range osdStats {
-		osd_num := strings.Split(osd,"/")[4]
 		if state, found := osdState[osd]; found	{
-			ch <- prometheus.MustNewConstMetric(collector.params, prometheus.CounterValue, 1, osd_num, state.Host, strconv.Itoa(state.Port))
+			ch <- prometheus.MustNewConstMetric(collector.params, prometheus.CounterValue, 1, osd, state.Host, strconv.Itoa(state.Port))
 		} else {
-			ch <- prometheus.MustNewConstMetric(collector.params, prometheus.CounterValue, 0, osd_num, v.Host, "unknown")
+			ch <- prometheus.MustNewConstMetric(collector.params, prometheus.CounterValue, 0, osd, v.Host, "unknown")
 		}
-		ch <- prometheus.MustNewConstMetric(collector.dataBlockSize, prometheus.CounterValue, float64(v.DataBlockSize), osd_num)
-		ch <- prometheus.MustNewConstMetric(collector.size, prometheus.CounterValue, float64(v.Size), osd_num)
-		ch <- prometheus.MustNewConstMetric(collector.free, prometheus.CounterValue, float64(v.Free), osd_num)
+		ch <- prometheus.MustNewConstMetric(collector.dataBlockSize, prometheus.CounterValue, float64(v.DataBlockSize), osd)
+		ch <- prometheus.MustNewConstMetric(collector.size, prometheus.CounterValue, float64(v.Size), osd)
+		ch <- prometheus.MustNewConstMetric(collector.free, prometheus.CounterValue, float64(v.Free), osd)
 		for op, stats := range v.OpStats {
-			ch <- prometheus.MustNewConstMetric(collector.statsBytes, prometheus.CounterValue, float64(stats.Bytes), osd_num, "op", op)
-			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, float64(stats.Count), osd_num, "op", op)
-			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, float64(stats.Usecs), osd_num, "op", op)
+			ch <- prometheus.MustNewConstMetric(collector.statsBytes, prometheus.CounterValue, float64(stats.Bytes), osd, "op", op)
+			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, float64(stats.Count), osd, "op", op)
+			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, float64(stats.Usecs), osd, "op", op)
 		}
 
 		for subop, stats := range v.SubopStats {
-			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, float64(stats.Count), osd_num, "subop", subop)
-			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, float64(stats.Usecs), osd_num, "subop", subop)
+			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, float64(stats.Count), osd, "subop", subop)
+			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, float64(stats.Usecs), osd, "subop", subop)
 		}
 
 		for rec, stats := range v.RecoveryStats {
-			ch <- prometheus.MustNewConstMetric(collector.statsBytes, prometheus.CounterValue, float64(stats.Bytes), osd_num, "rec", rec)
-			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, float64(stats.Count), osd_num, "rec", rec)
+			ch <- prometheus.MustNewConstMetric(collector.statsBytes, prometheus.CounterValue, float64(stats.Bytes), osd, "rec", rec)
+			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, float64(stats.Count), osd, "rec", rec)
 		}
 	}
 }
