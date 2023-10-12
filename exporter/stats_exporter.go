@@ -114,7 +114,7 @@ func (collector *statsCollector) Collect(ch chan<- prometheus.Metric) {
 		if err == nil {
 			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, count, "op", op)
 		}
-		usecs, err := stats.Iops.Float64()
+		usecs, err := stats.Usecs.Float64()
 		if err == nil {
 			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, usecs, "op", op)
 		}
@@ -137,7 +137,7 @@ func (collector *statsCollector) Collect(ch chan<- prometheus.Metric) {
 		if err == nil {
 			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, count, "subop", subop)
 		}
-		usecs, err := stats.Iops.Float64()
+		usecs, err := stats.Usecs.Float64()
 		if err == nil {
 			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, usecs, "subop", subop)
 		}
