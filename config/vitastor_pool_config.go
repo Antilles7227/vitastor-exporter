@@ -11,7 +11,7 @@ type VitastorPoolConfig struct {
 	MaxOSDCombinations int32  `json:"max_osd_combinations,omitempty"`
 	BlockSize          int32  `json:"block_size,omitempty"`
 	ImmediateCommit    string `json:"immediate_commit,omitempty"`
-	OSDTags            string `json:"osd_tags,omitempty"`
+	OSDTags            interface{} `json:"osd_tags,omitempty"`
 }
 
 type VitastorPoolStats struct {
