@@ -17,10 +17,12 @@ func Register(config *config.VitastorConfig) {
 	monitorCollector := newMonitorCollector(config)
 	osdCollector := newOsdCollector(config)
 	statsCollector := newStatsCollector(config)
+	imageCollector := newImageCollector(config)
 	prometheus.MustRegister(version.NewCollector("vitastor_exporter"))
 	prometheus.MustRegister(poolCollector)
 	prometheus.MustRegister(monitorCollector)
 	prometheus.MustRegister(osdCollector)
 	prometheus.MustRegister(statsCollector)
+	prometheus.MustRegister(imageCollector)
 	prometheus.Unregister(collectors.NewGoCollector())
 }
