@@ -16,10 +16,11 @@ import (
 type osdCollector struct {
 	params				*prometheus.Desc
 	dataBlockSize 		*prometheus.Desc
+	bitmapGranularity	*prometheus.Desc
 	size 				*prometheus.Desc
 	free 				*prometheus.Desc
 	statsBytes 			*prometheus.Desc
-	statsUsecs			*prometheus.Desc
+	statsUsec			*prometheus.Desc
 	statsCount			*prometheus.Desc
 
 	vitastorConfig	*config.VitastorConfig
@@ -34,6 +35,10 @@ func newOsdCollector(conf *config.VitastorConfig) *osdCollector {
 								nil),
 		dataBlockSize: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "data_block_size_bytes"),
 								"OSD block size in bytes",
+								[]string{"osd_num"},
+								nil),
+		bitmapGranularity: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "bitmap_granularity"),
+								"OSD bitmap granularity in bytes",
 								[]string{"osd_num"},
 								nil),
 		size: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "size_bytes"),
@@ -52,7 +57,7 @@ func newOsdCollector(conf *config.VitastorConfig) *osdCollector {
 								"OSD stat count",
 								[]string{"osd_num", "stat_type", "stat_name"},
 								nil),
-		statsUsecs: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "stat_usec"),
+		statsUsec: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "stat_usec"),
 								"OSD stat time in usecs",
 								[]string{"osd_num", "stat_type", "stat_name"},
 								nil),
@@ -65,11 +70,12 @@ func (collector *osdCollector) Describe(ch chan<- *prometheus.Desc) {
 	//Update this section with the each metric you create for a given collector
 	ch <- collector.params
 	ch <- collector.dataBlockSize
+	ch <- collector.bitmapGranularity
 	ch <- collector.size
 	ch <- collector.free
 	ch <- collector.statsBytes
 	ch <- collector.statsCount
-	ch <- collector.statsUsecs
+	ch <- collector.statsUsec
 }
 
 func (collector *osdCollector) Collect(ch chan<- prometheus.Metric) {
@@ -129,23 +135,25 @@ func (collector *osdCollector) Collect(ch chan<- prometheus.Metric) {
 		} else {
 			ch <- prometheus.MustNewConstMetric(collector.params, prometheus.CounterValue, 0, osd, v.Host, "unknown")
 		}
+		ch <- prometheus.MustNewConstMetric(collector.bitmapGranularity, prometheus.CounterValue, float64(v.BitmapGranularity), osd)
 		ch <- prometheus.MustNewConstMetric(collector.dataBlockSize, prometheus.CounterValue, float64(v.DataBlockSize), osd)
 		ch <- prometheus.MustNewConstMetric(collector.size, prometheus.CounterValue, float64(v.Size), osd)
 		ch <- prometheus.MustNewConstMetric(collector.free, prometheus.CounterValue, float64(v.Free), osd)
 		for op, stats := range v.OpStats {
 			ch <- prometheus.MustNewConstMetric(collector.statsBytes, prometheus.CounterValue, float64(stats.Bytes), osd, "op", op)
 			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, float64(stats.Count), osd, "op", op)
-			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, float64(stats.Usecs), osd, "op", op)
+			ch <- prometheus.MustNewConstMetric(collector.statsUsec, prometheus.CounterValue, float64(stats.Usec), osd, "op", op)
 		}
 
 		for subop, stats := range v.SubopStats {
 			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, float64(stats.Count), osd, "subop", subop)
-			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, float64(stats.Usecs), osd, "subop", subop)
+			ch <- prometheus.MustNewConstMetric(collector.statsUsec, prometheus.CounterValue, float64(stats.Usec), osd, "subop", subop)
 		}
 
 		for rec, stats := range v.RecoveryStats {
 			ch <- prometheus.MustNewConstMetric(collector.statsBytes, prometheus.CounterValue, float64(stats.Bytes), osd, "rec", rec)
 			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, float64(stats.Count), osd, "rec", rec)
+			ch <- prometheus.MustNewConstMetric(collector.statsUsec, prometheus.CounterValue, float64(stats.Usec), osd, "subop", rec)
 		}
 	}
 }

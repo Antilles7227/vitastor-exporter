@@ -13,7 +13,7 @@ import (
 
 type statsCollector struct {
 	statsBytes 			*prometheus.Desc
-	statsUsecs			*prometheus.Desc
+	statsUsec			*prometheus.Desc
 	statsCount			*prometheus.Desc
 	statsBps			*prometheus.Desc
 	statsLat			*prometheus.Desc
@@ -35,7 +35,7 @@ func newStatsCollector(conf *config.VitastorConfig) *statsCollector {
 								"Global stat count",
 								[]string{"stat_type", "stat_name"},
 								nil),
-		statsUsecs: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "stat_usec"),
+		statsUsec: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "stat_usec"),
 								"Global stat time in usecs",
 								[]string{"stat_type", "stat_name"},
 								nil),
@@ -69,7 +69,7 @@ func (collector *statsCollector) Describe(ch chan<- *prometheus.Desc) {
 	//Update this section with the each metric you create for a given collector
 	ch <- collector.statsBytes
 	ch <- collector.statsCount
-	ch <- collector.statsUsecs
+	ch <- collector.statsUsec
 	ch <- collector.statsBps
 	ch <- collector.statsLat
 	ch <- collector.statsIops
@@ -114,9 +114,9 @@ func (collector *statsCollector) Collect(ch chan<- prometheus.Metric) {
 		if err == nil {
 			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, count, "op", op)
 		}
-		usecs, err := stats.Usecs.Float64()
+		usecs, err := stats.Usec.Float64()
 		if err == nil {
-			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, usecs, "op", op)
+			ch <- prometheus.MustNewConstMetric(collector.statsUsec, prometheus.CounterValue, usecs, "op", op)
 		}
 		lat, err := stats.Lat.Float64()
 		if err == nil {
@@ -137,9 +137,9 @@ func (collector *statsCollector) Collect(ch chan<- prometheus.Metric) {
 		if err == nil {
 			ch <- prometheus.MustNewConstMetric(collector.statsCount, prometheus.CounterValue, count, "subop", subop)
 		}
-		usecs, err := stats.Usecs.Float64()
+		usecs, err := stats.Usec.Float64()
 		if err == nil {
-			ch <- prometheus.MustNewConstMetric(collector.statsUsecs, prometheus.CounterValue, usecs, "subop", subop)
+			ch <- prometheus.MustNewConstMetric(collector.statsUsec, prometheus.CounterValue, usecs, "subop", subop)
 		}
 		lat, err := stats.Lat.Float64()
 		if err == nil {

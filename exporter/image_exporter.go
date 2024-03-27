@@ -84,7 +84,7 @@ func (collector *imageCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	for pool_id, _ := range pools {
+	for pool_id := range pools {
 		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second * 20)
 		imageStatsPath := collector.vitastorConfig.VitastorPrefix + "/inode/stats/" + pool_id
 		imageStatsRaw, err := cli.Get(ctx2, imageStatsPath, clientv3.WithPrefix())
