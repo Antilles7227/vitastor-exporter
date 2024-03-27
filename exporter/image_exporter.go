@@ -3,43 +3,41 @@ package exporter
 import (
 	"context"
 	"encoding/json"
-	"strings"
-	"time"
 	config "github.com/Antilles7227/vitastor-exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"strings"
+	"time"
 )
 
-
 type imageCollector struct {
-	rawUsed				*prometheus.Desc
-	writeStats			*prometheus.Desc
-	readStats			*prometheus.Desc
-	deleteStats			*prometheus.Desc
+	rawUsed     *prometheus.Desc
+	writeStats  *prometheus.Desc
+	readStats   *prometheus.Desc
+	deleteStats *prometheus.Desc
 
-	vitastorConfig	*config.VitastorConfig
+	vitastorConfig *config.VitastorConfig
 }
-
 
 func newImageCollector(conf *config.VitastorConfig) *imageCollector {
 	return &imageCollector{
 		rawUsed: prometheus.NewDesc(prometheus.BuildFQName(namespace, "image", "raw_used"),
-								"Image raw used in bytes",
-								[]string{"pool_id", "image_num"},
-								nil),
+			"Image raw used in bytes",
+			[]string{"pool_id", "image_num"},
+			nil),
 		writeStats: prometheus.NewDesc(prometheus.BuildFQName(namespace, "image", "write"),
-								"Image write stat",
-								[]string{"pool_id", "image_num", "stat_name"},
-								nil),
+			"Image write stat",
+			[]string{"pool_id", "image_num", "stat_name"},
+			nil),
 		readStats: prometheus.NewDesc(prometheus.BuildFQName(namespace, "image", "read"),
-								"Image read stat",
-								[]string{"pool_id", "image_num", "stat_name"},
-								nil),
+			"Image read stat",
+			[]string{"pool_id", "image_num", "stat_name"},
+			nil),
 		deleteStats: prometheus.NewDesc(prometheus.BuildFQName(namespace, "image", "delete"),
-								"Image delete stat",
-								[]string{"pool_id", "image_num", "stat_name"},
-								nil),
+			"Image delete stat",
+			[]string{"pool_id", "image_num", "stat_name"},
+			nil),
 		vitastorConfig: conf,
 	}
 }
@@ -65,7 +63,7 @@ func (collector *imageCollector) Collect(ch chan<- prometheus.Metric) {
 	defer cli.Close()
 
 	//Collect pool ids
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 20)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	poolsPath := collector.vitastorConfig.VitastorPrefix + "/config/pools"
 	poolsConfigRaw, err := cli.Get(ctx, poolsPath)
 	cancel()
@@ -85,7 +83,7 @@ func (collector *imageCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	for pool_id := range pools {
-		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second * 20)
+		ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*20)
 		imageStatsPath := collector.vitastorConfig.VitastorPrefix + "/inode/stats/" + pool_id
 		imageStatsRaw, err := cli.Get(ctx2, imageStatsPath, clientv3.WithPrefix())
 		cancel2()
@@ -101,7 +99,7 @@ func (collector *imageCollector) Collect(ch chan<- prometheus.Metric) {
 				if err != nil {
 					log.Error(err, "Unable to parse image stats")
 				}
-				image_num := strings.Split(string(v.Key),"/")[5]
+				image_num := strings.Split(string(v.Key), "/")[5]
 				imageStats[image_num] = st
 			}
 		}

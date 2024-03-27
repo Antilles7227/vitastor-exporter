@@ -24,5 +24,5 @@ type VitastorOSDStats struct {
 type OSDStats struct {
 	Bytes int `json:"bytes,omitempty"`
 	Count int `json:"count,omitempty"`
-	Usec int `json:"usec,omitempty"`
+	Usec  int `json:"usec,omitempty"`
 }

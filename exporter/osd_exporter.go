@@ -3,64 +3,62 @@ package exporter
 import (
 	"context"
 	"encoding/json"
-	"strconv"
-	"strings"
-	"time"
 	config "github.com/Antilles7227/vitastor-exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"strconv"
+	"strings"
+	"time"
 )
 
-
 type osdCollector struct {
-	params				*prometheus.Desc
-	dataBlockSize 		*prometheus.Desc
-	bitmapGranularity	*prometheus.Desc
-	size 				*prometheus.Desc
-	free 				*prometheus.Desc
-	statsBytes 			*prometheus.Desc
-	statsUsec			*prometheus.Desc
-	statsCount			*prometheus.Desc
+	params            *prometheus.Desc
+	dataBlockSize     *prometheus.Desc
+	bitmapGranularity *prometheus.Desc
+	size              *prometheus.Desc
+	free              *prometheus.Desc
+	statsBytes        *prometheus.Desc
+	statsUsec         *prometheus.Desc
+	statsCount        *prometheus.Desc
 
-	vitastorConfig	*config.VitastorConfig
+	vitastorConfig *config.VitastorConfig
 }
-
 
 func newOsdCollector(conf *config.VitastorConfig) *osdCollector {
 	return &osdCollector{
-		params:		prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "status"),
-								"OSD info. 1 if OSD up, 0 if down",
-								[]string{"osd_num", "host", "port"}, 
-								nil),
+		params: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "status"),
+			"OSD info. 1 if OSD up, 0 if down",
+			[]string{"osd_num", "host", "port"},
+			nil),
 		dataBlockSize: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "data_block_size_bytes"),
-								"OSD block size in bytes",
-								[]string{"osd_num"},
-								nil),
+			"OSD block size in bytes",
+			[]string{"osd_num"},
+			nil),
 		bitmapGranularity: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "bitmap_granularity"),
-								"OSD bitmap granularity in bytes",
-								[]string{"osd_num"},
-								nil),
+			"OSD bitmap granularity in bytes",
+			[]string{"osd_num"},
+			nil),
 		size: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "size_bytes"),
-								"OSD size in bytes",
-								[]string{"osd_num"},
-								nil),
+			"OSD size in bytes",
+			[]string{"osd_num"},
+			nil),
 		free: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "free_bytes"),
-								"OSD free size in bytes",
-								[]string{"osd_num"},
-								nil),
+			"OSD free size in bytes",
+			[]string{"osd_num"},
+			nil),
 		statsBytes: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "stat_bytes"),
-								"OSD stat size",
-								[]string{"osd_num", "stat_type", "stat_name"},
-								nil),
+			"OSD stat size",
+			[]string{"osd_num", "stat_type", "stat_name"},
+			nil),
 		statsCount: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "stat_count"),
-								"OSD stat count",
-								[]string{"osd_num", "stat_type", "stat_name"},
-								nil),
+			"OSD stat count",
+			[]string{"osd_num", "stat_type", "stat_name"},
+			nil),
 		statsUsec: prometheus.NewDesc(prometheus.BuildFQName(namespace, "osd", "stat_usec"),
-								"OSD stat time in usecs",
-								[]string{"osd_num", "stat_type", "stat_name"},
-								nil),
+			"OSD stat time in usecs",
+			[]string{"osd_num", "stat_type", "stat_name"},
+			nil),
 		vitastorConfig: conf,
 	}
 }
@@ -88,14 +86,14 @@ func (collector *osdCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	defer cli.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 20)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	osdStatePath := collector.vitastorConfig.VitastorPrefix + "/osd/state"
 	osdStateRaw, err := cli.Get(ctx, osdStatePath, clientv3.WithPrefix())
 	cancel()
 	if err != nil {
 		log.Error(err, "Unable to get osd state info")
 	}
-	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second * 20)
+	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*20)
 	osdStatsPath := collector.vitastorConfig.VitastorPrefix + "/osd/stats"
 	osdStatsRaw, err := cli.Get(ctx2, osdStatsPath, clientv3.WithPrefix())
 	cancel2()
@@ -113,7 +111,7 @@ func (collector *osdCollector) Collect(ch chan<- prometheus.Metric) {
 			if err != nil {
 				log.Error(err, "Unable to parse osd state")
 			}
-			osd_num := strings.Split(string(v.Key),"/")[4]
+			osd_num := strings.Split(string(v.Key), "/")[4]
 			osdState[osd_num] = st
 		}
 	}
@@ -124,13 +122,13 @@ func (collector *osdCollector) Collect(ch chan<- prometheus.Metric) {
 			if err != nil {
 				log.Error(err, "Unable to parse osd stats")
 			}
-			osd_num := strings.Split(string(v.Key),"/")[4]
+			osd_num := strings.Split(string(v.Key), "/")[4]
 			osdStats[osd_num] = st
 		}
 	}
 
 	for osd, v := range osdStats {
-		if state, found := osdState[osd]; found	{
+		if state, found := osdState[osd]; found {
 			ch <- prometheus.MustNewConstMetric(collector.params, prometheus.CounterValue, 1, osd, state.Host, strconv.Itoa(state.Port))
 		} else {
 			ch <- prometheus.MustNewConstMetric(collector.params, prometheus.CounterValue, 0, osd, v.Host, "unknown")

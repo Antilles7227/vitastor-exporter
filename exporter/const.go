@@ -1,12 +1,11 @@
 package exporter
 
 import (
+	config "github.com/Antilles7227/vitastor-exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/common/version"
-	config "github.com/Antilles7227/vitastor-exporter/config"
 )
-
 
 const (
 	namespace = "vitastor"
