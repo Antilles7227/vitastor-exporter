@@ -13,7 +13,7 @@ type VitastorStats struct {
 type GlobalOpStats struct {
 	Bytes json.Number `json:"bytes,omitempty"`
 	Count json.Number `json:"count,omitempty"`
-	Usecs json.Number `json:"usecs,omitempty"`
+	Usec json.Number `json:"usec,omitempty"`
 	Bps   json.Number `json:"bps,omitempty"`
 	Iops  json.Number `json:"iops,omitempty"`
 	Lat   json.Number `json:"lat,omitempty"`
