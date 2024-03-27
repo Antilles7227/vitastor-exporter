@@ -16,7 +16,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
 func main() {
 	portArg := flag.Int("port", 8080, "Port to expose metrics. Default: 8080")
 	uriArg := flag.String("metrics-path", "/metrics", "Path to expose metrics. Default: /metrics")
@@ -26,7 +25,7 @@ func main() {
 	flag.Parse()
 
 	config := vconfig.VitastorConfig{
-		VitastorPrefix: *vitastorPrefix,
+		VitastorPrefix:   *vitastorPrefix,
 		VitastorEtcdUrls: strings.Split(*etcdUrlArg, ","),
 	}
 	log.Info("Trying to load vitastor.conf")
@@ -41,13 +40,12 @@ func main() {
 		config.VitastorEtcdUrls = strings.Split(*etcdUrlArg, ",")
 		config.VitastorPrefix = *vitastorPrefix
 	}
-	
+
 	exporter.Register(&config)
 
 	http.Handle(*uriArg, promhttp.Handler())
-    log.Fatal(http.ListenAndServe(":" + strconv.Itoa(*portArg), nil))
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*portArg), nil))
 }
-
 
 func loadConfiguration(file string, config *vconfig.VitastorConfig) error {
 	configFile, err := os.Open(file)

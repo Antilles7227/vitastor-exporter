@@ -1,16 +1,16 @@
 package config
 
 type VitastorPoolConfig struct {
-	Name               string `json:"name"`
-	Scheme             string `json:"scheme"`
-	PGSize             int32  `json:"pg_size"`
-	ParityChunks       int32  `json:"parity_chunks,omitempty"`
-	PGMinSize          int32  `json:"pg_minsize"`
-	PGCount            int32  `json:"pg_count"`
-	FailureDomain      string `json:"failure_domain,omitempty"`
-	MaxOSDCombinations int32  `json:"max_osd_combinations,omitempty"`
-	BlockSize          int32  `json:"block_size,omitempty"`
-	ImmediateCommit    string `json:"immediate_commit,omitempty"`
+	Name               string      `json:"name"`
+	Scheme             string      `json:"scheme"`
+	PGSize             int32       `json:"pg_size"`
+	ParityChunks       int32       `json:"parity_chunks,omitempty"`
+	PGMinSize          int32       `json:"pg_minsize"`
+	PGCount            int32       `json:"pg_count"`
+	FailureDomain      string      `json:"failure_domain,omitempty"`
+	MaxOSDCombinations int32       `json:"max_osd_combinations,omitempty"`
+	BlockSize          int32       `json:"block_size,omitempty"`
+	ImmediateCommit    string      `json:"immediate_commit,omitempty"`
 	OSDTags            interface{} `json:"osd_tags,omitempty"`
 }
 

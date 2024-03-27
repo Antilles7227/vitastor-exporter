@@ -3,66 +3,63 @@ package exporter
 import (
 	"context"
 	"encoding/json"
-	"time"
 	config "github.com/Antilles7227/vitastor-exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"time"
 )
 
-
 type statsCollector struct {
-	statsBytes 			*prometheus.Desc
-	statsUsec			*prometheus.Desc
-	statsCount			*prometheus.Desc
-	statsBps			*prometheus.Desc
-	statsLat			*prometheus.Desc
-	statsIops			*prometheus.Desc
-	objectBytes			*prometheus.Desc
-	objectCount			*prometheus.Desc
+	statsBytes  *prometheus.Desc
+	statsUsec   *prometheus.Desc
+	statsCount  *prometheus.Desc
+	statsBps    *prometheus.Desc
+	statsLat    *prometheus.Desc
+	statsIops   *prometheus.Desc
+	objectBytes *prometheus.Desc
+	objectCount *prometheus.Desc
 
-	vitastorConfig	*config.VitastorConfig
+	vitastorConfig *config.VitastorConfig
 }
-
 
 func newStatsCollector(conf *config.VitastorConfig) *statsCollector {
 	return &statsCollector{
 		statsBytes: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "stat_bytes"),
-								"Global stat size",
-								[]string{"stat_type", "stat_name"},
-								nil),
+			"Global stat size",
+			[]string{"stat_type", "stat_name"},
+			nil),
 		statsCount: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "stat_count"),
-								"Global stat count",
-								[]string{"stat_type", "stat_name"},
-								nil),
+			"Global stat count",
+			[]string{"stat_type", "stat_name"},
+			nil),
 		statsUsec: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "stat_usec"),
-								"Global stat time in usecs",
-								[]string{"stat_type", "stat_name"},
-								nil),
+			"Global stat time in usecs",
+			[]string{"stat_type", "stat_name"},
+			nil),
 		statsBps: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "stat_bps"),
-								"Global stat bytes per second",
-								[]string{"stat_type", "stat_name"},
-								nil),
+			"Global stat bytes per second",
+			[]string{"stat_type", "stat_name"},
+			nil),
 		statsLat: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "stat_lat"),
-								"Global stat latency in usecs",
-								[]string{"stat_type", "stat_name"},
-								nil),
+			"Global stat latency in usecs",
+			[]string{"stat_type", "stat_name"},
+			nil),
 		statsIops: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "stat_iops"),
-								"Global stat IOPS",
-								[]string{"stat_type", "stat_name"},
-								nil),
+			"Global stat IOPS",
+			[]string{"stat_type", "stat_name"},
+			nil),
 		objectBytes: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "object_bytes"),
-								"Global object size in bytes",
-								[]string{"object_type"},
-								nil),
+			"Global object size in bytes",
+			[]string{"object_type"},
+			nil),
 		objectCount: prometheus.NewDesc(prometheus.BuildFQName(namespace, "global", "object_count"),
-								"Global object count",
-								[]string{"object_type"},
-								nil),
+			"Global object count",
+			[]string{"object_type"},
+			nil),
 		vitastorConfig: conf,
 	}
 }
-
 
 func (collector *statsCollector) Describe(ch chan<- *prometheus.Desc) {
 
@@ -87,7 +84,7 @@ func (collector *statsCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	defer cli.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 20)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	globalStatsPath := collector.vitastorConfig.VitastorPrefix + "/stats"
 	globalStatsRaw, err := cli.Get(ctx, globalStatsPath)
 	cancel()
@@ -182,7 +179,6 @@ func (collector *statsCollector) Collect(ch chan<- prometheus.Metric) {
 	if err == nil {
 		ch <- prometheus.MustNewConstMetric(collector.objectCount, prometheus.CounterValue, object, "object")
 	}
-
 
 	bytes_clean, err := globalStats.ObjectBytes.Clean.Float64()
 	if err == nil {
